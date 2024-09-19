@@ -1,4 +1,5 @@
 package com.roman.bulk_mail_sender.controller;
+import com.roman.bulk_mail_sender.dto.ApiResponse;
 import com.roman.bulk_mail_sender.dto.EmailDto;
 import com.roman.bulk_mail_sender.services.EmailService;
 import jakarta.mail.MessagingException;
@@ -17,7 +18,7 @@ public class EmailController {
     private final EmailService emailService;
 
     @PostMapping("sendBulk")
-    public String sendBulkEmail(@RequestBody List<EmailDto> emailList) throws MessagingException {
+    public ApiResponse sendBulkEmail(@RequestBody List<EmailDto> emailList) throws MessagingException {
         return emailService.sendBulkEmail(emailList);
     }
 }

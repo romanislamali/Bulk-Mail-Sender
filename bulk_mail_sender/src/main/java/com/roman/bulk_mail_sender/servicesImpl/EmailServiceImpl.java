@@ -1,10 +1,10 @@
 package com.roman.bulk_mail_sender.servicesImpl;
 
+import com.roman.bulk_mail_sender.dto.ApiResponse;
 import com.roman.bulk_mail_sender.dto.EmailDto;
 import com.roman.bulk_mail_sender.services.EmailService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +25,22 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender mailSender;
     @Autowired
     private Configuration config;
-    public void sendBulkEmail(List<EmailDto> emailList) throws MessagingException {
+    public ApiResponse sendBulkEmail(List<EmailDto> emailList) {
+        ApiResponse response = new ApiResponse();
         try {
             MimeMessage[] messages = new MimeMessage[emailList.size()];
             for (int i = 0; i < emailList.size(); i++) {
-                MimeMessage  message = mailSender.createMimeMessage();
-                // set MediaType
-                MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                        StandardCharsets.UTF_8.name());
+                MimeMessage message = mailSender.createMimeMessage();
+
+                MimeMessageHelper helper = new MimeMessageHelper(
+                        message,
+                        MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                        StandardCharsets.UTF_8.name()
+                );
+
                 Template t = config.getTemplate("email-template.ftl");
                 String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, emailList.get(i));
+
                 helper.setText(html, true);
                 helper.setTo(emailList.get(i).getTo());
                 helper.setSubject(emailList.get(i).getSubject());
@@ -42,8 +48,14 @@ public class EmailServiceImpl implements EmailService {
                 messages[i] = message;
             }
             mailSender.send(messages);
+            response.setSuccess(true);
+            response.setMessage("Bulk email sent successfully!");
+            log.info("Bulk email sent successfully!");
         } catch (Exception e) {
-            log.error("Error occurs "+e);
+            log.error("Failed to send bulk email: " + e.getMessage(), e);
+            response.setSuccess(false);
+            response.setMessage("Failed to send bulk email: " + e.getMessage());
         }
+        return response;
     }
 }
