@@ -9,10 +9,4 @@ import java.util.List;
 public class EmailDto {
     private String to;
     private String subject;
-    private String text;
-    private String footer;
-    private String cc;
-    private String bcc;
-    private List<String> emails;
-    private MultipartFile[] attachments;
 }

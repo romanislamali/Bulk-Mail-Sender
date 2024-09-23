@@ -15,20 +15,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
+
     @Autowired
     private JavaMailSender mailSender;
+
     @Autowired
     private Configuration config;
+
+    @Override
     public ApiResponse sendBulkEmail(List<EmailDto> emailList) {
         ApiResponse response = new ApiResponse();
+
         try {
             MimeMessage[] messages = new MimeMessage[emailList.size()];
+
             for (int i = 0; i < emailList.size(); i++) {
                 MimeMessage message = mailSender.createMimeMessage();
 
@@ -38,8 +46,12 @@ public class EmailServiceImpl implements EmailService {
                         StandardCharsets.UTF_8.name()
                 );
 
+                Map<String, Object> templateData = new HashMap<>();
+                String email = emailList.get(i).getTo();
+                String username = email.substring(0, email.indexOf('@'));
+                templateData.put("username", username);
                 Template t = config.getTemplate("email-template.ftl");
-                String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, emailList.get(i));
+                String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, templateData);
 
                 helper.setText(html, true);
                 helper.setTo(emailList.get(i).getTo());
@@ -47,15 +59,19 @@ public class EmailServiceImpl implements EmailService {
 
                 messages[i] = message;
             }
+
             mailSender.send(messages);
+
             response.setSuccess(true);
             response.setMessage("Bulk email sent successfully!");
             log.info("Bulk email sent successfully!");
+
         } catch (Exception e) {
             log.error("Failed to send bulk email: " + e.getMessage(), e);
             response.setSuccess(false);
             response.setMessage("Failed to send bulk email: " + e.getMessage());
         }
+
         return response;
     }
 }
